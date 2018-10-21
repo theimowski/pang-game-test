@@ -79,7 +79,7 @@ let init () =
     |]
     matter.World.add(
         engine.world,
-        !^[| yield player; yield! balls; yield! walls |]) |> ignore
+        !^[| yield player; yield! walls |]) |> ignore
 
     engine, player, balls
 
