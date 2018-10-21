@@ -27,14 +27,25 @@ type Msg =
 | InitialCountLoaded of Result<Counter, exn>
 
 
+module Server =
+
+    open Shared
+    open Fable.Remoting.Client
+
+    /// A proxy you can use to talk to server directly
+    let api : ICounterApi =
+      Remoting.createApi()
+      |> Remoting.withRouteBuilder Route.builder
+      |> Remoting.buildProxy<ICounterApi>
+
 
 // defines the initial state and initial command (= side-effect) of the application
 let init () : Model * Cmd<Msg> =
     let initialModel = { Counter = None }
     let loadCountCmd =
-        Cmd.ofPromise
-            (fetchAs<Counter> "/api/init" Decode.int)
-            []
+        Cmd.ofAsync
+            Server.api.initialCounter
+            ()
             (Ok >> InitialCountLoaded)
             (Error >> InitialCountLoaded)
     initialModel, loadCountCmd
@@ -66,6 +77,8 @@ let safeComponents =
              a [ Href "http://fable.io" ] [ str "Fable" ]
              str ", "
              a [ Href "https://elmish.github.io/elmish/" ] [ str "Elmish" ]
+             str ", "
+             a [ Href "https://zaid-ajaj.github.io/Fable.Remoting/" ] [ str "Fable.Remoting" ]
            ]
 
     p [ ]

@@ -5,7 +5,7 @@ group Server
 
     nuget FSharp.Core
     nuget Saturn
-    nuget Fable.JsonConverter
+    nuget Fable.Remoting.Giraffe
     nuget Microsoft.ApplicationInsights.AspNetCore ~> 2.2
     nuget WindowsAzure.Storage
 
@@ -20,6 +20,7 @@ group Client
     nuget Fable.Elmish.React ~> 2
     nuget Fable.Elmish.HMR ~> 2
     nuget Fable.React ~> 4
+    nuget Fable.Remoting.Client ~> 4
 
     clitool dotnet-fable ~> 2
 
