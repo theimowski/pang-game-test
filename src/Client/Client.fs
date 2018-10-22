@@ -74,3 +74,6 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     canvas.style.background <- "black"
 
 Canvas.Start("canvas", init(), Tick, update, view, subscribe)
+
+[<Emit("$0 in $1")>]
+let checkIn (listener: string) (o: obj) : bool = jsNative
