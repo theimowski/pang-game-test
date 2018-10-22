@@ -63,6 +63,12 @@ let (|Ball|_|) (body: Matter.Body) =
 
 let isBall = function Ball _ -> true | _ -> false
 
+let (|Pair|_|) (one, other) (pair: Matter.IPair) =
+    if (one pair.bodyA && other pair.bodyB) ||
+       (one pair.bodyB && other pair.bodyA) then
+        Some ()
+    else
+        None
 
 let castRay bodies (x1, y1) (x2, y2) =
     matter.Query.ray(bodies, vector x1 y1, vector x2 y2)
