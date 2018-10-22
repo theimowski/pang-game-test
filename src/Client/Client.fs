@@ -9,6 +9,23 @@ open Fable.Import
 open Canvas
 open Physics.Consts
 
+module Canvas =
+    let renderCircle (ctx: Context) style (ball: Matter.Body) =
+        Canvas.Circle(ctx, style, ball.position.x, ball.position.y, ball.circleRadius)
+
+    let renderShape (ctx: Context) style (shape: Matter.Body) =
+        let vertices = shape.vertices |> Array.map (fun v -> v.x, v.y)
+        Canvas.Shape(ctx, style, vertices)
+
+    let renderSquare (ctx: Context) style size (x, y) =
+        Canvas.Square(ctx, style, x, y, size)
+
+    let renderLine (ctx: Context) style (x1, y1) (x2, y2) =
+        Canvas.Line(ctx, style, x1, y1, x2, y2)
+
+    let renderText (ctx: Context) style (x, y) text =
+        Canvas.Text(ctx, style, text, x, y)
+
 type Model =
     { Engine : Matter.Engine
       Player : Matter.Body
@@ -23,10 +40,13 @@ let init () =
       Player = player
       Balls = balls }
 
+let onTick (model: Model) delta =
+    Physics.update model.Engine delta
+    model
+
 let update (model: Model) = function
     | Tick delta ->
-        Physics.update model.Engine delta
-        model
+        onTick model delta
 
 let renderShape (ctx: Context) style (shape: Matter.Body) =
     let vertices = shape.vertices |> Array.map (fun v -> v.x, v.y)
