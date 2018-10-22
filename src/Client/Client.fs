@@ -9,6 +9,18 @@ open Fable.Import
 open Canvas
 open Physics.Consts
 
+open Shared
+
+module Server =
+
+    open Fable.Remoting.Client
+
+    /// A proxy you can use to talk to server directly
+    let api : IGameApi =
+      Remoting.createApi()
+      |> Remoting.withRouteBuilder Route.builder
+      |> Remoting.buildProxy<IGameApi>
+
 module Canvas =
     let renderCircle (ctx: Context) style (ball: Matter.Body) =
         Canvas.Circle(ctx, style, ball.position.x, ball.position.y, ball.circleRadius)
@@ -64,7 +76,7 @@ let view (model : Model) (ctx: Context) _ =
     // Apply zoom
     ctx.scale(zoom, zoom)
 
-    renderShape ctx !^"yellow" model.Player
+    Canvas.renderShape ctx !^"yellow" model.Player
 
     ctx.restore()
 
@@ -73,7 +85,7 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     canvas.height <- CANVAS_HEIGHT
     canvas.style.background <- "black"
 
-Canvas.Start("canvas", init(), Tick, update, view, subscribe)
-
 [<Emit("$0 in $1")>]
 let checkIn (listener: string) (o: obj) : bool = jsNative
+
+Canvas.Start("canvas", init(), Tick, update, view, subscribe)
