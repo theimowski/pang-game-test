@@ -99,3 +99,9 @@ let onCollisionWith (engine: Matter.Engine) handler =
     matter.Events.on_collisionStart(engine, fun ev ->
         for pair in ev.pairs do
             handler pair)
+
+let removeBall world ball =
+    matter.Composite.remove(world, ball) |> ignore
+
+let addBalls world balls =
+    matter.World.add(world, balls) |> ignore
