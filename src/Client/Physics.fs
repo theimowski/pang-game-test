@@ -92,10 +92,10 @@ let init () =
 let update (engine: Matter.Engine) (delta: float): unit =
     matter.Engine.update(engine, delta) |> ignore
 
-let moveVert (body: Matter.Body) (x : float) =
+let moveHorizontally (body: Matter.Body) (x : float) =
     matter.Body.applyForce(body, body.position, vector x 0.)
 
-let onCollisionWith (engine: Matter.Engine) handler =
+let onCollision (engine: Matter.Engine) handler =
     matter.Events.on_collisionStart(engine, fun ev ->
         for pair in ev.pairs do
             handler pair)
