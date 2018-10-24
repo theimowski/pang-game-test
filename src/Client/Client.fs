@@ -5,6 +5,7 @@ open System
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import
+open Fable.Import.Browser
 
 open Canvas
 open Physics.Consts
