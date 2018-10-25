@@ -140,10 +140,41 @@ let onTick (model: Model) delta =
                 Balls = ballCollisions (model, collisions)
                 Score = model.Score + collisions.Length }
 
+let renderHighScores (highScores : Scores) =
+    let scores = Browser.document.getElementById "scores"
+    match scores.children.[0] with
+    | null -> ()
+    | ol -> scores.removeChild ol |> ignore
+    let ol = scores.appendChild (Browser.document.createElement "ol")
+    for (name, score) in highScores |> Seq.sortByDescending snd do
+        let li = Browser.document.createElement "li"
+        li.innerText <- sprintf "%s: %d points" name score
+        ol.appendChild li |> ignore
+
+let gameOver score reset =
+    async {
+        let! scores = Server.api.getHighScores ()
+        let isHighScore =
+            if scores.Length < Shared.HighScores.limit then
+                score > 0
+            else
+                let lowest = scores |> Seq.map snd |> Seq.min
+                score > lowest
+        if isHighScore then
+            let name = Browser.window.prompt (sprintf "High score: %d! What's your name?" score)
+            let realName = if name = "" || isNull name then "(anonymous)" else name
+            let! updatedScores = Server.api.submitHighScore (name, score)
+            renderHighScores updatedScores
+        else
+            renderHighScores scores
+        reset ()
+
+    } |> Async.StartImmediate
+
 let update reset (model: Model) = function
     | _ when model.State = GameOver -> model
     | Collision (Physics.Pair ((=) model.Player, Physics.isBall)) ->
-        reset ()
+        gameOver model.Score reset
         { model with State = GameOver }
     | Collision _ ->
         model
@@ -240,4 +271,9 @@ let rec reset () =
 if not (checkIn "ontouchstart" Browser.window) then
     Browser.window.alert "Sorry, game is only for mobile!"
 else
-    reset ()
+    async {
+        let! scores = Server.api.getHighScores ()
+        renderHighScores scores
+        reset ()
+
+    } |> Async.StartImmediate
