@@ -5,7 +5,6 @@ open System
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import
-open Fable.Import.Browser
 
 open Canvas
 open Physics.Consts
@@ -61,10 +60,6 @@ let update (model: Model) = function
     | Tick delta ->
         onTick model delta
 
-let renderShape (ctx: Context) style (shape: Matter.Body) =
-    let vertices = shape.vertices |> Array.map (fun v -> v.x, v.y)
-    Canvas.Shape(ctx, style, vertices)
-
 let view (model : Model) (ctx: Context) _ =
     let zoom =
         min
@@ -80,6 +75,8 @@ let view (model : Model) (ctx: Context) _ =
     Canvas.renderShape ctx !^"yellow" model.Player
 
     ctx.restore()
+
+open Fable.Import.Browser
 
 let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     canvas.width <- CANVAS_WIDTH
