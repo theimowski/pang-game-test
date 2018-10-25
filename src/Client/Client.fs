@@ -65,7 +65,8 @@ type Model =
       Player : Matter.Body
       Balls : Matter.Body []
       MoveDir : Dir option
-      Harpoon : Section option }
+      Harpoon : Section option
+      Score : int }
 
 type Msg =
     | Tick of delta : float
@@ -78,7 +79,8 @@ let init () =
       Player = player
       Balls = balls
       MoveDir = None
-      Harpoon = None }
+      Harpoon = None
+      Score = 0 }
 
 let movePlayer player dir =
     let x = match dir with Left -> -PLAYER_X_FORCE | Right -> PLAYER_X_FORCE
@@ -128,7 +130,8 @@ let onTick (model: Model) delta =
         else
             { model with
                 Harpoon = None
-                Balls = ballCollisions (model, collisions) }
+                Balls = ballCollisions (model, collisions)
+                Score = model.Score + collisions.Length }
 
 let update (model: Model) = function
     | Tick delta ->
@@ -171,6 +174,9 @@ let view (model : Model) (ctx: Context) _ =
     | Some harpoon ->
         Canvas.renderSquare ctx !^"yellow" HARPOON_TIP_SIZE (Point.toTuple harpoon.End)
         Canvas.renderLine ctx !^"white" (Point.toTuple harpoon.Start) (Point.toTuple harpoon.End)
+
+    // score
+    Canvas.renderText ctx !^"white" (0., TEXT_POSITION) (sprintf "Score: %d" model.Score)
 
     ctx.restore()
 
