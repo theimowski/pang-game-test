@@ -60,18 +60,24 @@ type Section =
     { Start : Point
       End : Point }
 
+type GameState =
+    | Playing
+    | GameOver
+
 type Model =
     { Engine : Matter.Engine
       Player : Matter.Body
       Balls : Matter.Body []
       MoveDir : Dir option
       Harpoon : Section option
-      Score : int }
+      Score : int
+      State : GameState }
 
 type Msg =
     | Tick of delta : float
     | Move of Dir option
     | Fire
+    | Collision of Matter.IPair
 
 let init () =
     let engine, player, balls = Physics.init ()
@@ -80,7 +86,8 @@ let init () =
       Balls = balls
       MoveDir = None
       Harpoon = None
-      Score = 0 }
+      Score = 0
+      State = Playing }
 
 let movePlayer player dir =
     let x = match dir with Left -> -PLAYER_X_FORCE | Right -> PLAYER_X_FORCE
@@ -134,6 +141,11 @@ let onTick (model: Model) delta =
                 Score = model.Score + collisions.Length }
 
 let update (model: Model) = function
+    | _ when model.State = GameOver -> model
+    | Collision (Physics.Pair ((=) model.Player, Physics.isBall)) ->
+        { model with State = GameOver }
+    | Collision _ ->
+        model
     | Tick delta ->
         onTick model delta
     | Move dir  ->
@@ -215,6 +227,8 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     fire.addEventListener_touchstart (fun e ->
         e.preventDefault ()
         Fire |> dispatch)
+
+    Physics.onCollision model.Engine (Collision >> dispatch)
 
 [<Emit("$0 in $1")>]
 let checkIn (listener: string) (o: obj) : bool = jsNative
