@@ -7,7 +7,7 @@ open Fable.Import
 module Consts =
     let [<Literal>] BALL_RADIUS = 120.
     let [<Literal>] BALL_X_FORCE = 1.
-    let [<Literal>] BALL_Y_FORCE = -1.5
+    let [<Literal>] BALL_Y_FORCE = -2.
     let [<Literal>] PLAYER_SIZE = 40.
     let [<Literal>] PLAYER_X_FORCE = 0.005
     let [<Literal>] HARPOON_TIP_SIZE = 16.
@@ -76,7 +76,7 @@ let castRay bodies (x1, y1) (x2, y2) =
 let init () =
     let engine = matter.Engine.create()
     let player = square 0. 400. PLAYER_SIZE
-    let balls = [| ball 1 BALL_X_FORCE 0. -200. |]
+    let balls = [| ball 1 BALL_X_FORCE 0. 0. |]
     let walls = [|
         wall 0. WORLD_BOUND_UPPER WORLD_WIDTH 50. // ceiling
         wall WORLD_BOUND_RIGHT 0. 50. 1050. // right wall
