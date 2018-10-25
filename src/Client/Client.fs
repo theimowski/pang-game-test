@@ -105,7 +105,7 @@ let ballCollisions (model: Model, collisions: Matter.ICollision []) =
         match collision.bodyA with
         | Physics.Ball level as ball ->
             let newBalls =
-                [| for forceX in [ -PLAYER_X_FORCE; PLAYER_X_FORCE ] ->
+                [| for forceX in [ -BALL_X_FORCE; BALL_X_FORCE ] ->
                     Physics.ball (level * 2) forceX ball.position.x ball.position.y |]
 
             Physics.addBalls model.Engine.world !^newBalls
