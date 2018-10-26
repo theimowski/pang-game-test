@@ -90,6 +90,23 @@ let moveHarpoon harpoon =
         let _end = Point.moveVert -HARPOON_STEP harpoon.End
         Some { harpoon with End = _end }
 
+let ballCollisions (model : Model, collisions : Matter.ICollision []) =
+    (model.Balls, collisions)
+    ||> Array.fold (fun balls collision ->
+        match collision.bodyA with
+        | Physics.Ball level as ball ->
+            let newBalls =
+                [| for forceX in [ -BALL_X_FORCE; BALL_X_FORCE] ->
+                    Physics.ball (level * 2) forceX ball.position.x ball.position.y |]
+
+            Physics.addBalls model.Engine.world !^newBalls
+            Physics.removeBall model.Engine.world !^ball
+
+            balls
+            |> Array.filter ((<>) ball)
+            |> Array.append newBalls
+        | _ -> balls)
+
 let onTick (model: Model) delta =
     Physics.update model.Engine delta
 
@@ -99,7 +116,18 @@ let onTick (model: Model) delta =
     | None ->
         model
     | Some harpoon ->
-        { model with Harpoon = moveHarpoon harpoon }
+        let collisions =
+            Physics.castRay
+                model.Balls
+                (Point.toTuple harpoon.Start)
+                (Point.toTuple harpoon.End)
+
+        if collisions.Length = 0 then
+            { model with Harpoon = moveHarpoon harpoon }
+        else
+            { model with
+                Harpoon = None
+                Balls = ballCollisions (model, collisions) }
 
 let update (model: Model) = function
     | Tick delta ->
