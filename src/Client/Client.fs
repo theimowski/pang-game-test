@@ -139,9 +139,10 @@ let onTick (model: Model) delta =
                 Balls = ballCollisions (model, collisions)
                 Score = model.Score + collisions.Length }
 
-let update (model: Model) = function
+let update reset (model: Model) = function
     | _ when model.State = GameOver -> model
     | Collision (Physics.Pair ( (=) model.Player , Physics.isBall )) ->
+        reset ()
         { model with State = GameOver}
     | Collision _ -> model
     | Tick delta ->
@@ -227,6 +228,8 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     Physics.onCollision model.Engine (Collision >> dispatch)
 
 
+let rec reset () =
+    Canvas.Start("canvas", init(), Tick, update reset, view, subscribe)
 
 [<Emit("$0 in $1")>]
 let checkIn (listener: string) (o: obj) : bool = jsNative
@@ -234,5 +237,5 @@ let checkIn (listener: string) (o: obj) : bool = jsNative
 if not (checkIn "ontouchstart" Browser.window) then
     Browser.window.alert "Sorry, game is only for mobile!"
 else
-    Canvas.Start("canvas", init(), Tick, update, view, subscribe)
+    reset ()
 
