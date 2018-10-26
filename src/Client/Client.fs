@@ -88,7 +88,12 @@ let view (model : Model) (ctx: Context) _ =
     // Apply zoom
     ctx.scale(zoom, zoom)
 
+    // player
     Canvas.renderShape ctx !^"yellow" model.Player
+
+    // balls
+    for ball in model.Balls do
+        Canvas.renderCircle ctx !^"red" ball
 
     ctx.restore()
 
