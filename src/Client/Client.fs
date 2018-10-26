@@ -38,27 +38,43 @@ module Canvas =
     let renderText (ctx: Context) style (x, y) text =
         Canvas.Text(ctx, style, text, x, y)
 
+type Dir =
+    | Left
+    | Right
+
 type Model =
     { Engine : Matter.Engine
       Player : Matter.Body
-      Balls : Matter.Body [] }
+      Balls : Matter.Body []
+      MoveDir : Dir option }
 
 type Msg =
     | Tick of delta : float
+    | Move of Dir option
 
 let init () =
     let engine, player, balls = Physics.init ()
     { Engine = engine
       Player = player
-      Balls = balls }
+      Balls = balls
+      MoveDir = None }
+
+let movePlayer player dir =
+    let x = match dir with | Left -> -PLAYER_X_FORCE | Right -> PLAYER_X_FORCE
+    Physics.moveHorizontally player x
 
 let onTick (model: Model) delta =
     Physics.update model.Engine delta
+
+    Option.iter (movePlayer model.Player) model.MoveDir
+
     model
 
 let update (model: Model) = function
     | Tick delta ->
         onTick model delta
+    | Move dir ->
+        { model with MoveDir = dir }
 
 let view (model : Model) (ctx: Context) _ =
     let zoom =
@@ -83,7 +99,33 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     canvas.height <- CANVAS_HEIGHT
     canvas.style.background <- "black"
 
+    let left = document.getElementById "left"
+    let right = document.getElementById "right"
+
+    let buttonWidth = sprintf "%fpx" (CANVAS_WIDTH / 3.)
+
+    left.style.width <- buttonWidth
+    right.style.width <- buttonWidth
+
+    left.addEventListener_touchstart (fun e ->
+        e.preventDefault ()
+        Left |> Some |> Move |> dispatch)
+    left.addEventListener_touchend (fun e ->
+        e.preventDefault ()
+        None |> Move |> dispatch)
+
+    right.addEventListener_touchstart (fun e ->
+        e.preventDefault ()
+        Right |> Some |> Move |> dispatch)
+    right.addEventListener_touchend (fun e ->
+        e.preventDefault ()
+        None |> Move |> dispatch)
+
 [<Emit("$0 in $1")>]
 let checkIn (listener: string) (o: obj) : bool = jsNative
 
-Canvas.Start("canvas", init(), Tick, update, view, subscribe)
+if not (checkIn "ontouchstart" Browser.window) then
+    Browser.window.alert "Sorry, game is only for mobile!"
+else
+    Canvas.Start("canvas", init(), Tick, update, view, subscribe)
+
