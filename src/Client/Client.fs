@@ -42,39 +42,79 @@ type Dir =
     | Left
     | Right
 
+type Point =
+    { X : float
+      Y : float }
+
+module Point =
+    let fromXY x y =
+        { X = x
+          Y = y }
+
+    let toTuple (p : Point) = p.X, p.Y
+
+    let moveVert (y : float) (p : Point) =
+        { p with Y = p.Y + y }
+
+type Section =
+    { Start : Point
+      End : Point }
+
 type Model =
     { Engine : Matter.Engine
       Player : Matter.Body
       Balls : Matter.Body []
-      MoveDir : Dir option }
+      MoveDir : Dir option
+      Harpoon : Section option }
 
 type Msg =
     | Tick of delta : float
     | Move of Dir option
+    | Fire
 
 let init () =
     let engine, player, balls = Physics.init ()
     { Engine = engine
       Player = player
       Balls = balls
-      MoveDir = None }
+      MoveDir = None
+      Harpoon = None }
 
 let movePlayer player dir =
     let x = match dir with | Left -> -PLAYER_X_FORCE | Right -> PLAYER_X_FORCE
     Physics.moveHorizontally player x
+
+let moveHarpoon harpoon =
+    if harpoon.End.Y < WORLD_BOUND_UPPER then None
+    else
+        let _end = Point.moveVert -HARPOON_STEP harpoon.End
+        Some { harpoon with End = _end }
 
 let onTick (model: Model) delta =
     Physics.update model.Engine delta
 
     Option.iter (movePlayer model.Player) model.MoveDir
 
-    model
+    match model.Harpoon with
+    | None ->
+        model
+    | Some harpoon ->
+        { model with Harpoon = moveHarpoon harpoon }
 
 let update (model: Model) = function
     | Tick delta ->
         onTick model delta
     | Move dir ->
         { model with MoveDir = dir }
+    | Fire ->
+        match model.Harpoon with
+        | Some _ -> model // already there
+        | None ->
+            let _start = Point.fromXY model.Player.position.x WORLD_BOUND_LOWER
+            let _end = Point.fromXY model.Player.position.x (model.Player.position.y - PLAYER_SIZE)
+            let harpoon : Section =  { Start = _start
+                                       End = _end }
+            { model with Harpoon = Some harpoon }
 
 let view (model : Model) (ctx: Context) _ =
     let zoom =
@@ -95,6 +135,13 @@ let view (model : Model) (ctx: Context) _ =
     for ball in model.Balls do
         Canvas.renderCircle ctx !^"red" ball
 
+    // harpoon
+    match model.Harpoon with
+    | None -> ()
+    | Some harpoon ->
+        Canvas.renderSquare ctx !^"yellow" HARPOON_TIP_SIZE (Point.toTuple harpoon.End)
+        Canvas.renderLine ctx !^"white" (Point.toTuple harpoon.Start) (Point.toTuple harpoon.End)
+
     ctx.restore()
 
 open Fable.Import.Browser
@@ -106,11 +153,14 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
 
     let left = document.getElementById "left"
     let right = document.getElementById "right"
+    let fire = document.getElementById "fire"
 
     let buttonWidth = sprintf "%fpx" (CANVAS_WIDTH / 3.)
 
     left.style.width <- buttonWidth
     right.style.width <- buttonWidth
+    fire.style.width <- buttonWidth
+    fire.parentElement.style.width <- buttonWidth
 
     left.addEventListener_touchstart (fun e ->
         e.preventDefault ()
@@ -125,6 +175,12 @@ let subscribe (canvas: Browser.HTMLCanvasElement) dispatch (model : Model) =
     right.addEventListener_touchend (fun e ->
         e.preventDefault ()
         None |> Move |> dispatch)
+
+    fire.addEventListener_touchstart (fun e ->
+        e.preventDefault ()
+        Fire |> dispatch)
+
+
 
 [<Emit("$0 in $1")>]
 let checkIn (listener: string) (o: obj) : bool = jsNative
